@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>·</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #01020a;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    cursor: none;
+  }
+
+  /* ============ INTRO ============ */
+  .intro-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    transition: opacity 1.6s ease 0.2s, visibility 1.6s ease 0.2s;
+  }
+  .intro-overlay.gone { opacity: 0; visibility: hidden; }
+  .intro-flame {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 20px #ff8c1a) drop-shadow(0 0 40px #ff4500);
+    animation: flamePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes flamePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+  .intro-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.5em;
+    color: #6a7694;
+    text-transform: uppercase;
+  }
+
+  /* ============ CURSOR ============ */
+  .cursor {
+    position: fixed;
+    width: 26px; height: 26px;
+    border: 1px solid rgba(255, 210, 120, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: screen;
+    transition: width 0.3s, height 0.3s, border-color 0.3s, background 0.3s;
+  }
+  .cursor::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 3px; height: 3px;
+    background: #ffd27a;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 14px #ffd27a, 0 0 28px #ff8c1a;
+  }
+  .cursor.hover {
+    width: 54px; height: 54px;
+    border-color: rgba(255, 150, 60, 1);
+    background: rgba(255, 150, 60, 0.08);
+  }
+  @media (pointer: coarse) {
+    body { cursor: auto; }
+    .cursor { display: none; }
+  }
+
+  /* ============ CANVAS ============ */
+  #stage-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: block;
+  }
+
+  /* ============ OVERLAY UI ============ */
+  .overlay-ui {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .main-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(1.4rem, 4.2vw, 3rem);
+    text-align: center;
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow:
+      0 0 20px rgba(255, 220, 150, 0.5),
+      0 0 60px rgba(255, 140, 26, 0.6),
+      0 0 120px rgba(255, 80, 20, 0.4),
+      0 4px 0 rgba(0,0,0,0.4);
+    max-width: 90%;
+  }
+  .main-title em {
+    font-style: normal;
+    color: #ffd27a;
+    text-shadow: 0 0 20px #ffd27a, 0 0 60px #ff8c1a, 0 0 120px #ff4500;
+  }
+  .sub-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.95rem, 2.2vw, 1.35rem);
+    color: rgba(255, 220, 160, 0.72);
+    margin-top: 18px;
+    text-align: center;
+    letter-spacing: 0.04em;
+    max-width: 90%;
+  }
+
+  /* ============ MENÚ INICIAL ============ */
+  .start-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    background:
+      radial-gradient(ellipse at center, rgba(20, 10, 40, 0.7) 0%, rgba(1, 2, 10, 0.95) 70%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  .start-menu.gone {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .menu-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: #ffd27a;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    opacity: 0.85;
+  }
+
+  .menu-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(1.5rem, 4.5vw, 2.6rem);
+    text-align: center;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(255, 140, 26, 0.5);
+    max-width: 700px;
+    margin-bottom: 12px;
+  }
+  .menu-title em {
+    font-style: normal;
+    color: #ffd27a;
+    text-shadow: 0 0 40px #ff8c1a, 0 0 80px #ff4500;
+  }
+
+  .menu-desc {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+    color: rgba(255, 220, 160, 0.7);
+    text-align: center;
+    max-width: 520px;
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 640px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 560px) {
+    .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  }
+
+  .menu-item {
+    position: relative;
+    padding: 18px 12px 16px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, rgba(255, 140, 26, 0.1) 0%, rgba(255, 80, 20, 0.04) 100%);
+    border: 1px solid rgba(255, 200, 120, 0.2);
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .menu-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 200, 120, 0.18), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .menu-item:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 200, 120, 0.7);
+    box-shadow: 0 12px 30px rgba(255, 140, 26, 0.25);
+  }
+  .menu-item:hover::before { opacity: 1; }
+
+  .menu-item .num {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: #ffd27a;
+    letter-spacing: 0.2em;
+    opacity: 0.7;
+  }
+
+  .menu-item .car-icon {
+    width: 62px;
+    height: 34px;
+    display: block;
+    filter: drop-shadow(0 0 8px rgba(255, 140, 26, 0.5));
+    transition: transform 0.35s ease;
+  }
+  .menu-item:hover .car-icon {
+    transform: scale(1.1) translateX(4px);
+  }
+
+  .menu-item .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #e8ecff;
+  }
+  .menu-item .sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.78rem;
+    color: rgba(255, 220, 160, 0.6);
+    margin-top: 2px;
+  }
+
+  .menu-foot {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.35em;
+    color: #6a7694;
+    text-transform: uppercase;
+    animation: hintBlink 2.4s ease-in-out infinite;
+  }
+  @keyframes hintBlink {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+
+  /* ============ HUD JUEGO ============ */
+  .progress {
+    position: fixed;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 30;
+    padding: 8px 14px;
+    background: rgba(6, 8, 22, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: opacity 0.6s ease;
+  }
+  .progress span {
+    width: 16px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress span::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #ffd27a, #ff6a1a);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .progress span.on::after { transform: scaleX(1); }
+  .progress span.on { box-shadow: 0 0 12px rgba(255, 200, 120, 0.6); }
+
+  .hud-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.45em;
+    color: rgba(255, 210, 120, 0.65);
+    text-transform: uppercase;
+    z-index: 8;
+    animation: hintBlink 2.4s ease-in-out infinite;
+    pointer-events: none;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  /* ============ MÚSICA ============ */
+  .music-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 210, 120, 0.3);
+    background: rgba(10, 14, 36, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #ffd27a;
+    cursor: pointer;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s ease;
+    opacity: 0.6;
+  }
+  .music-toggle:hover {
+    opacity: 1;
+    border-color: rgba(255, 210, 120, 0.85);
+    transform: scale(1.08);
+  }
+  .music-toggle .bars {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 14px;
+  }
+  .music-toggle .bars span {
+    width: 2px;
+    background: #ffd27a;
+    border-radius: 1px;
+    animation: barDance 1s ease-in-out infinite;
+  }
+  .music-toggle .bars span:nth-child(1) { height: 6px; }
+  .music-toggle .bars span:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+  .music-toggle .bars span:nth-child(3) { height: 9px; animation-delay: 0.3s; }
+  .music-toggle .bars span:nth-child(4) { height: 14px; animation-delay: 0.45s; }
+  .music-toggle.paused .bars span {
+    animation-play-state: paused;
+    height: 3px;
+  }
+  @keyframes barDance {
+    0%, 100% { transform: scaleY(0.5); }
+    50%      { transform: scaleY(1); }
+  }
+
+  /* ============ TARJETA DE NOTA ============ */
+  .note-card {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.55s ease, visibility 0.55s ease;
+    pointer-events: none;
+  }
+  .note-card.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .note-backdrop {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.92) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .note-inner {
+    position: relative;
+    max-width: 580px;
+    width: 100%;
+    padding: 42px 36px 36px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, rgba(22, 14, 36, 0.94) 0%, rgba(8, 6, 22, 0.96) 100%);
+    border: 1px solid rgba(255, 200, 120, 0.25);
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.75),
+      0 0 60px rgba(255, 140, 26, 0.18),
+      inset 0 0 60px rgba(255, 180, 80, 0.05);
+    transform: translateY(30px) scale(0.94);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+  }
+  .note-card.open .note-inner { transform: translateY(0) scale(1); }
+  .note-inner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ffd27a, #ff6a1a, transparent);
+    opacity: 0.75;
+  }
+
+  .note-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.5em;
+    color: #ffd27a;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.85;
+  }
+  .note-tag::before,
+  .note-tag::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, transparent, rgba(255, 210, 120, 0.35), transparent);
+  }
+
+  .note-body {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: clamp(1rem, 2.3vw, 1.15rem);
+    line-height: 1.75;
+    color: #ede5d5;
+    text-align: left;
+    letter-spacing: 0.012em;
+    white-space: pre-line;
+  }
+  .note-body em {
+    font-style: italic;
+    color: #ffd27a;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15em;
+    text-shadow: 0 0 20px rgba(255, 180, 60, 0.55);
+  }
+  .note-body strong {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .note-footer {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 210, 120, 0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .note-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    color: #6a7694;
+  }
+  .note-counter b {
+    color: #ffd27a;
+    font-weight: 500;
+  }
+
+  .note-close {
+    background: transparent;
+    border: 1px solid rgba(255, 210, 120, 0.4);
+    color: #ffd27a;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    padding: 11px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.35s ease;
+  }
+  .note-close:hover {
+    background: rgba(255, 210, 120, 0.12);
+    border-color: rgba(255, 210, 120, 0.9);
+    transform: translateY(-2px);
+  }
+
+  /* ============ FINAL ============ */
+  .final-card .note-inner {
+    border-color: rgba(255, 210, 120, 0.55);
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.75),
+      0 0 100px rgba(255, 140, 26, 0.4),
+      inset 0 0 80px rgba(255, 180, 80, 0.1);
+  }
+  .final-card .note-tag {
+    color: #fff;
+    letter-spacing: 0.6em;
+  }
+
+  @media (max-width: 640px) {
+    .note-inner { padding: 32px 24px 28px; }
+    .note-footer { flex-direction: column; align-items: stretch; gap: 14px; }
+    .note-close { width: 100%; }
+    .progress span { width: 12px; }
+    .menu-desc { font-size: 0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-flame">🔥</div>
+  <p class="intro-text">encendiendo motores</p>
+</div>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+
+<!-- CANVAS -->
+<canvas id="stage-canvas"></canvas>
+
+<!-- TÍTULO DE FONDO -->
+<div class="overlay-ui">
+  <h1 class="main-title" id="mainTitle"></h1>
+  <p class="sub-title" id="subTitle"></p>
+</div>
+
+<!-- MENÚ INICIAL -->
+<div class="start-menu" id="startMenu">
+  <p class="menu-kicker">· 30 · 09 ·</p>
+  <h2 class="menu-title">Feliz Día de los <em>Carritos</em> Hot Wheels</h2>
+  <p class="menu-desc">Cada auto guarda algo distinto. Ábrelos en el orden que quieras — o empieza por el 1 si prefieres.</p>
+
+  <div class="menu-grid" id="menuGrid"></div>
+
+  <p class="menu-foot" id="menuFoot">toca un auto para empezar</p>
+</div>
+
+<!-- PROGRESO -->
+<div class="progress" id="progress" style="opacity:0;"></div>
+
+<!-- HUD HINT -->
+<p class="hud-hint" id="hudHint" style="opacity:0;"></p>
+
+<!-- MÚSICA -->
+<button class="music-toggle paused" id="musicToggle" aria-label="Música">
+  <div class="bars"><span></span><span></span><span></span><span></span></div>
+</button>
+<audio id="bgMusic" loop preload="auto">
+  <source src="camilo.mp3" type="audio/mpeg">
+</audio>
+
+<!-- TARJETA -->
+<div class="note-card" id="noteCard">
+  <div class="note-backdrop" id="noteBackdrop"></div>
+  <div class="note-inner">
+    <p class="note-tag" id="noteTag">· nota ·</p>
+    <p class="note-body" id="noteBody"></p>
+    <div class="note-footer">
+      <span class="note-counter" id="noteCounter">· <b>00</b> / 06</span>
+      <button class="note-close" id="noteClose">cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+const rand = (a, b) => Math.random() * (b - a) + a;
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const TAU = Math.PI * 2;
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const canvas = document.getElementById('stage-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, DPR;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener('resize', () => { resize(); buildScene(); });
+
+/* ============================================================
+   PALETA
+   ============================================================ */
+const PALETTE = [
+  { body: '#ff4500', trim: '#ffd27a' },
+  { body: '#ff8c1a', trim: '#ffffff' },
+  { body: '#ffcc00', trim: '#ff4500' },
+  { body: '#ff2a6d', trim: '#ffd27a' },
+  { body: '#00d4ff', trim: '#ffffff' },
+  { body: '#7a3cff', trim: '#ffd27a' },
+];
+
+/* ============================================================
+   NOTAS — TUS MENSAJES, TU VOZ
+   Orden narrativo 1→6
+   ============================================================ */
+const NOTES = [
+  {
+    n: 1,
+    label: 'El comienzo',
+    sub: 'dónde empezó todo',
+    tag: '· 1 · el comienzo ·',
+    text: `Te conocí al comienzo de la carrera.\n\nSin planearlo, sin buscarlo. En esa época en la que todo era nuevo y no sabíamos nada de la vida todavía.`
+  },
+  {
+    n: 2,
+    label: 'Lo importante',
+    sub: 'lo que significaste',
+    tag: '· 2 · lo importante ·',
+    text: `Fuiste más importante para mí de lo que crees.\n\nMás de lo que probablemente te dije en su momento. De esas personas que se quedan sin hacer ruido.`
+  },
+  {
+    n: 3,
+    label: 'Los momentos',
+    sub: 'los que guardo',
+    tag: '· 3 · los momentos ·',
+    text: `Sé que pasamos muchos momentos juntos.\n\nY cada uno de ellos lo guardo en mi corazón. No los olvido, aunque no siempre los diga.`
+  },
+  {
+    n: 4,
+    label: 'Lo que mereces',
+    sub: 'que llegues lejos',
+    tag: '· 4 · lo que mereces ·',
+    text: `Espero que llegues muy lejos en la vida.\n\nPorque te lo mereces. Porque eres de las personas que se esfuerzan sin hacer ruido, y eso algún día se paga.`
+  },
+  {
+    n: 5,
+    label: 'Hoy',
+    sub: '30 de septiembre',
+    tag: '· 5 · hoy ·',
+    text: `En esta fecha espero que la hayas pasado súper.\n\nDe verdad. Que hayas reído, que te hayan consentido, que te hayas sentido querido. Porque lo mereces.`
+  },
+  {
+    n: 6,
+    label: 'Siempre',
+    sub: 'lo que deseo',
+    tag: '· 6 · y siempre ·',
+    text: `Que sigas siendo la persona que conocí.\n\nClaro, más madura mentalmente — eso es inevitable y bueno — pero con ese corazón bueno y esa personalidad noble que te hacen ser tú.\n\nNo cambies eso. Es lo mejor que tienes.`
+  }
+];
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const state = {
+  cars: [],
+  particles: [],
+  orbitTexts: [],
+  waves: [],
+  flameAlpha: 0.85,
+  flamePhase: 0,
+  mouseX: 0,
+  mouseY: 0,
+  time: 0,
+  hoveredCar: null,
+  focusCar: null,
+  focusProgress: 0,
+  openNoteIndex: -1,
+  started: false,   // ¿ya se inició el juego?
+  nextSuggested: 0  // índice del siguiente auto sugerido (0 = auto 1)
+};
+state.mouseX = window.innerWidth / 2;
+state.mouseY = window.innerHeight / 2;
+
+document.addEventListener('mousemove', (e) => {
+  state.mouseX = e.clientX;
+  state.mouseY = e.clientY;
+});
+
+/* ============================================================
+   FRASES ORBITANDO
+   ============================================================ */
+const ORBIT_TEXTS = [
+  'al comienzo',
+  'sin hacer ruido',
+  'gracias',
+  'siempre',
+  'esa persona',
+  'te lo mereces',
+  'especial',
+  'nunca cambies',
+  'llegarás lejos',
+  'de las que valen',
+  'no se olvida',
+  'principios',
+  'corazón bueno',
+  'noble',
+  'madura',
+  'hoy',
+  'y siempre'
+];
+
+/* ============================================================
+   DIBUJAR AUTO
+   ============================================================ */
+function drawCar(car, size) {
+  const s = size;
+  const p = car.palette;
+  ctx.save();
+  ctx.shadowColor = p.body;
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = p.body;
+  ctx.beginPath();
+  ctx.moveTo(-40 * s, 6 * s);
+  ctx.quadraticCurveTo(-42 * s, -6 * s, -28 * s, -10 * s);
+  ctx.lineTo(-16 * s, -12 * s);
+  ctx.quadraticCurveTo(-8 * s, -26 * s, 8 * s, -26 * s);
+  ctx.lineTo(24 * s, -26 * s);
+  ctx.quadraticCurveTo(38 * s, -24 * s, 42 * s, -8 * s);
+  ctx.lineTo(44 * s, 4 * s);
+  ctx.quadraticCurveTo(44 * s, 8 * s, 40 * s, 8 * s);
+  ctx.lineTo(-40 * s, 8 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath();
+  ctx.moveTo(-8 * s, -12 * s);
+  ctx.quadraticCurveTo(-2 * s, -22 * s, 8 * s, -22 * s);
+  ctx.lineTo(20 * s, -22 * s);
+  ctx.quadraticCurveTo(30 * s, -20 * s, 34 * s, -12 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = p.trim;
+  ctx.fillRect(-38 * s, -2 * s, 80 * s, 1.6 * s);
+
+  ctx.fillStyle = '#fff8d0';
+  ctx.beginPath();
+  ctx.arc(40 * s, -3 * s, 2 * s, 0, TAU);
+  ctx.fill();
+
+  const wheelY = 8 * s;
+  const wheelR = 6 * s;
+  [-22 * s, 22 * s].forEach(wx => {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.arc(wx, wheelY, wheelR, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#888';
+    ctx.beginPath();
+    ctx.arc(wx, wheelY, wheelR * 0.45, 0, TAU);
+    ctx.fill();
+  });
+
+  // Etiqueta numérica arriba
+  if (!car.read && state.started) {
+    const pulse = 0.55 + Math.sin(car.pulsePhase) * 0.45;
+    // círculo
+    ctx.fillStyle = `rgba(255, 200, 100, ${0.85})`;
+    ctx.shadowColor = '#ffd27a';
+    ctx.shadowBlur = 14 * pulse;
+    ctx.beginPath();
+    ctx.arc(0, -44 * s, 8 * s, 0, TAU);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // número
+    ctx.fillStyle = '#1a0e00';
+    ctx.font = `bold ${10 * s}px Archivo Black, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(car.noteIndex + 1), 0, -44 * s + 0.5 * s);
+  }
+
+  // ✓ si leída
+  if (car.read) {
+    ctx.fillStyle = `rgba(120, 255, 160, 0.9)`;
+    ctx.font = `bold ${11 * s}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#7aff9c';
+    ctx.shadowBlur = 10;
+    ctx.fillText('✓', 0, -44 * s);
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+}
+
+/* ============================================================
+   CONSTRUIR ESCENA
+   ============================================================ */
+function buildScene() {
+  const cx = W / 2;
+  const cy = H / 2;
+  const minDim = Math.min(W, H);
+
+  state.cars = [];
+  const carCount = NOTES.length;
+  for (let i = 0; i < carCount; i++) {
+    const baseAngle = (i / carCount) * TAU - Math.PI / 2;
+    state.cars.push({
+      noteIndex: i,
+      baseAngle: baseAngle,
+      orbit: minDim * (0.32 + (i % 3) * 0.04),
+      orbitSpeed: rand(0.00010, 0.00020) * (i % 2 === 0 ? 1 : -1),
+      size: rand(0.78, 0.95),
+      palette: PALETTE[i % PALETTE.length],
+      yOffset: rand(-30, 30),
+      tilt: rand(-0.1, 0.1),
+      bobPhase: rand(0, TAU),
+      bobSpeed: rand(0.0009, 0.0016),
+      depth: rand(0.55, 0.95),
+      read: false,
+      pulsePhase: rand(0, TAU),
+      x: 0, y: 0, screenSize: 1, alpha: 1
+    });
+  }
+
+  state.orbitTexts = ORBIT_TEXTS.map((t, i) => ({
+    text: t,
+    baseAngle: (i / ORBIT_TEXTS.length) * TAU,
+    orbit: minDim * (0.22 + Math.random() * 0.28),
+    speed: rand(0.00006, 0.00014) * (Math.random() > 0.5 ? 1 : -1),
+    size: rand(9, 13),
+    alpha: rand(0.28, 0.6),
+    yRatio: rand(0.42, 0.58)
+  }));
+
+  state.particles = [];
+  const particleCount = Math.min(240, Math.floor(W * H / 6500));
+  for (let i = 0; i < particleCount; i++) {
+    state.particles.push({
+      x: rand(0, W),
+      y: rand(0, H),
+      vx: rand(-0.12, 0.12),
+      vy: rand(-0.12, 0.12),
+      size: rand(0.5, 2.2),
+      alpha: rand(0.2, 0.85),
+      color: Math.random() > 0.75 ? '#ffd27a' : '#ffffff',
+      twinkle: rand(0, TAU),
+      twSpeed: rand(0.02, 0.06)
+    });
+  }
+}
+
+/* ============================================================
+   FLAME
+   ============================================================ */
+function drawFlame(cx, cy, scale, alpha) {
+  if (alpha <= 0.01) return;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 280);
+  grad.addColorStop(0, `rgba(255, 220, 130, ${alpha * 0.45})`);
+  grad.addColorStop(0.35, `rgba(255, 150, 30, ${alpha * 0.18})`);
+  grad.addColorStop(1, 'rgba(255, 80, 20, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(0, 0, 280, 0, TAU);
+  ctx.fill();
+
+  ctx.shadowColor = '#ff8c1a';
+  ctx.shadowBlur = 50 * alpha;
+
+  const gradFlame = ctx.createLinearGradient(-140, -40, 120, 40);
+  gradFlame.addColorStop(0, `rgba(255, 170, 50, ${alpha})`);
+  gradFlame.addColorStop(0.5, `rgba(255, 220, 120, ${alpha})`);
+  gradFlame.addColorStop(1, `rgba(255, 130, 20, ${alpha})`);
+  ctx.fillStyle = gradFlame;
+
+  ctx.beginPath();
+  ctx.moveTo(-150, 0);
+  ctx.quadraticCurveTo(-130, -32, -60, -32);
+  ctx.quadraticCurveTo(-10, -32, 40, -58);
+  ctx.quadraticCurveTo(85, -74, 105, -42);
+  ctx.quadraticCurveTo(125, -12, 92, 12);
+  ctx.quadraticCurveTo(62, 32, 20, 26);
+  ctx.quadraticCurveTo(-20, 22, -60, 32);
+  ctx.quadraticCurveTo(-115, 38, -150, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur = 70 * alpha;
+  ctx.strokeStyle = `rgba(255, 245, 190, ${alpha * 0.9})`;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-138, 0);
+  ctx.quadraticCurveTo(-108, -20, -42, -20);
+  ctx.quadraticCurveTo(8, -20, 62, -42);
+  ctx.quadraticCurveTo(88, -54, 88, -28);
+  ctx.quadraticCurveTo(88, -8, 58, 4);
+  ctx.quadraticCurveTo(20, 16, -20, 13);
+  ctx.quadraticCurveTo(-84, 8, -138, 0);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/* ============================================================
+   ONDAS
+   ============================================================ */
+function drawWaves() {
+  for (let i = state.waves.length - 1; i >= 0; i--) {
+    const w = state.waves[i];
+    w.r += w.speed;
+    w.alpha *= 0.965;
+    if (w.alpha < 0.01) { state.waves.splice(i, 1); continue; }
+    ctx.strokeStyle = `rgba(255, 200, 120, ${w.alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(w.x, w.y, w.r, 0, TAU);
+    ctx.stroke();
+  }
+}
+
+/* ============================================================
+   HIT TEST
+   ============================================================ */
+function carHitTest(mx, my) {
+  let best = null, bestDist = Infinity;
+  for (const c of state.cars) {
+    const r = 40 * c.screenSize;
+    const dx = mx - c.x;
+    const dy = my - c.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < r && d < bestDist) { bestDist = d; best = c; }
+  }
+  return best;
+}
+
+/* ============================================================
+   LOOP
+   ============================================================ */
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(now - lastTime, 60);
+  lastTime = now;
+  state.time += dt;
+
+  ctx.fillStyle = 'rgba(1, 2, 10, 0.22)';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cy = H / 2;
+  const px = (state.mouseX / W - 0.5) * 2;
+  const py = (state.mouseY / H - 0.5) * 2;
+
+  // partículas
+  state.particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.twinkle += p.twSpeed;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    const a = p.alpha * (0.5 + Math.sin(p.twinkle) * 0.5);
+    ctx.fillStyle = p.color === '#ffd27a'
+      ? `rgba(255, 210, 122, ${a})`
+      : `rgba(255, 255, 255, ${a})`;
+    ctx.beginPath();
+    ctx.arc(p.x + px * 6, p.y + py * 6, p.size, 0, TAU);
+    ctx.fill();
+  });
+
+  // flame
+  state.flamePhase += dt * 0.001;
+  const flameScale = 1 + Math.sin(state.flamePhase) * 0.05;
+  drawFlame(cx + px * 4, cy + py * 4, flameScale * Math.min(W, H) / 900, state.flameAlpha);
+
+  // anillo de puntos
+  const ringTotal = 90;
+  for (let i = 0; i < ringTotal; i++) {
+    const t = i / ringTotal;
+    const a = t * TAU + state.time * 0.0009;
+    const r = Math.min(W, H) * 0.27 + Math.sin(state.time * 0.003 + i) * 5;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r * 0.55;
+    const s = 1 + Math.sin(state.time * 0.005 + i * 0.5) * 0.6;
+    ctx.fillStyle = `rgba(255, 220, 150, ${0.55 + Math.sin(state.time * 0.004 + i) * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(x, y, s, 0, TAU);
+    ctx.fill();
+  }
+
+  drawWaves();
+
+  // textos orbitando
+  state.orbitTexts.forEach(t => {
+    t.baseAngle += t.speed * dt;
+    const a = t.baseAngle;
+    const r = t.orbit;
+    const x = cx + Math.cos(a) * r + px * 5;
+    const y = cy + Math.sin(a) * r * t.yRatio + py * 5;
+    const depth = (Math.sin(a) + 1) / 2;
+    const alpha = t.alpha * (0.25 + depth * 0.85);
+    const size = t.size * (0.7 + depth * 0.55);
+    ctx.font = `500 ${size}px Inter, sans-serif`;
+    ctx.fillStyle = `rgba(255, 235, 200, ${alpha})`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255, 180, 60, 0.6)';
+    ctx.shadowBlur = 8 * depth;
+    ctx.fillText(t.text, x, y);
+    ctx.shadowBlur = 0;
+  });
+
+  // autos
+  state.cars.forEach(c => {
+    c.baseAngle += c.orbitSpeed * dt;
+    c.bobPhase += c.bobSpeed * dt;
+    c.pulsePhase += dt * 0.004;
+  });
+
+  state.hoveredCar = carHitTest(state.mouseX, state.mouseY);
+
+  const sorted = state.cars.slice().sort((a, b) => a.depth - b.depth);
+  sorted.forEach(c => {
+    let a = c.baseAngle;
+    let r = c.orbit;
+    let x = cx + Math.cos(a) * r + px * (8 * c.depth);
+    let y = cy + Math.sin(a) * r * 0.55 + c.yOffset + Math.sin(c.bobPhase) * 8 + py * (8 * c.depth);
+
+    if (state.focusCar === c) {
+      state.focusProgress = Math.min(1, state.focusProgress + dt * 0.0035);
+      const e = 1 - Math.pow(1 - state.focusProgress, 3);
+      x = x * (1 - e) + cx * e;
+      y = y * (1 - e) + (cy - 30) * e;
+      c.screenSize = c.size * (1 + e * 1.6);
+    } else if (state.focusCar === null && state.focusProgress > 0) {
+      state.focusProgress = Math.max(0, state.focusProgress - dt * 0.004);
+    }
+
+    const depth = (Math.sin(a) + 1) / 2;
+    let alpha = 0.4 + depth * 0.6;
+    if (state.focusCar === c) alpha = 1;
+
+    const isHovered = (state.hoveredCar === c) && state.focusCar === null;
+    const hoverBoost = isHovered ? 0.15 : 0;
+
+    c.x = x; c.y = y;
+    if (!state.focusCar) c.screenSize = c.size * (0.55 + depth * 0.6 + hoverBoost);
+    c.alpha = alpha;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(c.tilt + Math.sin(c.bobPhase * 0.5) * 0.05);
+    ctx.globalAlpha = alpha;
+    drawCar(c, c.screenSize);
+    ctx.restore();
+  });
+
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   MENÚ INICIAL
+   ============================================================ */
+const menuGrid = document.getElementById('menuGrid');
+const startMenu = document.getElementById('startMenu');
+const progressBox = document.getElementById('progress');
+const hudHint = document.getElementById('hudHint');
+const noteCard = document.getElementById('noteCard');
+const noteTag = document.getElementById('noteTag');
+const noteBody = document.getElementById('noteBody');
+const noteClose = document.getElementById('noteClose');
+const noteCounter = document.getElementById('noteCounter');
+const noteBackdrop = document.getElementById('noteBackdrop');
+const musicToggle = document.getElementById('musicToggle');
+const music = document.getElementById('bgMusic');
+const cursor = document.getElementById('cursor');
+const mainTitle = document.getElementById('mainTitle');
+const subTitle = document.getElementById('subTitle');
+
+// Íconos SVG de autito para el menú
+function carSVG(color) {
+  return `
+    <svg class="car-icon" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 10 52 Q 10 38 22 36 L 42 32 Q 52 16 76 16 L 100 16 Q 116 18 122 32 L 132 36 Q 138 38 138 50 L 138 56 Q 138 60 134 60 L 12 60 Q 10 60 10 56 Z" fill="${color}" stroke="rgba(255,255,255,0.3)" stroke-width="0.6"/>
+      <path d="M 44 32 Q 52 20 76 20 L 98 20 Q 108 22 114 32 Z" fill="rgba(0,0,0,0.75)"/>
+      <rect x="12" y="42" width="124" height="2" fill="rgba(255,220,140,0.85)" rx="1"/>
+      <circle cx="34" cy="60" r="9" fill="#0a0a0a"/>
+      <circle cx="34" cy="60" r="3.5" fill="#888"/>
+      <circle cx="112" cy="60" r="9" fill="#0a0a0a"/>
+      <circle cx="112" cy="60" r="3.5" fill="#888"/>
+      <circle cx="132" cy="48" r="1.6" fill="#fff8d0"/>
+    </svg>
+  `;
+}
+
+// Construir menú
+NOTES.forEach((note, i) => {
+  const item = document.createElement('button');
+  item.className = 'menu-item';
+  item.dataset.index = i;
+  item.innerHTML = `
+    <span class="num">${String(i+1).padStart(2,'0')}</span>
+    ${carSVG(PALETTE[i % PALETTE.length].body)}
+    <span class="label">${note.label}</span>
+    <span class="sub">${note.sub}</span>
+  `;
+  item.addEventListener('click', () => {
+    startGame(i);
+  });
+  menuGrid.appendChild(item);
+});
+
+// progreso dots
+NOTES.forEach(() => progressBox.appendChild(document.createElement('span')));
+const dots = progressBox.querySelectorAll('span');
+
+function updateProgress() {
+  const read = state.cars.filter(c => c.read).length;
+  dots.forEach((d, i) => d.classList.toggle('on', i < read));
+  noteCounter.innerHTML = `· <b>${String(read).padStart(2,'0')}</b> / ${String(NOTES.length).padStart(2,'0')}`;
+  hudHint.textContent = read === NOTES.length
+    ? 'todas las notas leídas ✨ toca otra vez para releerlas'
+    : `${NOTES.length - read} nota${NOTES.length - read === 1 ? '' : 's'} por abrir · toca un auto`;
+}
+updateProgress();
+
+function startGame(initialIndex = 0) {
+  state.started = true;
+  startMenu.classList.add('gone');
+  progressBox.style.opacity = '1';
+  hudHint.style.opacity = '1';
+  setTimeout(() => {
+    mainTitle.innerHTML = 'Feliz Día de los<br><em>Carr</em>itos Hot Wheels';
+    subTitle.textContent = 'cada auto guarda una nota';
+  }, 300);
+  // dispara onda desde el centro
+  state.waves.push({ x: W / 2, y: H / 2, r: 30, alpha: 0.9, speed: 7 });
+  // arranca la música
+  startMusic();
+  // abre la nota del auto elegido
+  setTimeout(() => {
+    const car = state.cars[initialIndex];
+    if (car) openNote(car);
+  }, 700);
+}
+
+/* ============================================================
+   TARJETAS
+   ============================================================ */
+function openNote(car) {
+  const note = NOTES[car.noteIndex];
+  state.focusCar = car;
+  state.openNoteIndex = car.noteIndex;
+
+  noteTag.textContent = note.tag;
+  // Convertimos **negrita** y *itálica* de forma simple
+  let html = note.text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  noteBody.innerHTML = html;
+
+  setTimeout(() => {
+    noteCard.classList.add('open');
+  }, 320);
+
+  if (!car.read) {
+    car.read = true;
+    setTimeout(updateProgress, 400);
+  } else {
+    setTimeout(updateProgress, 400);
+  }
+}
+
+function closeNote() {
+  noteCard.classList.remove('open');
+  setTimeout(() => {
+    state.focusCar = null;
+    state.openNoteIndex = -1;
+  }, 300);
+
+  const read = state.cars.filter(c => c.read).length;
+  if (read === NOTES.length) {
+    state.waves.push({ x: W / 2, y: H / 2, r: 30, alpha: 0.9, speed: 8 });
+    setTimeout(() => {
+      state.waves.push({ x: W / 2, y: H / 2, r: 30, alpha: 0.6, speed: 6 });
+    }, 400);
+  }
+}
+
+noteClose.addEventListener('click', closeNote);
+noteBackdrop.addEventListener('click', closeNote);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && noteCard.classList.contains('open')) closeNote();
+});
+
+/* ============================================================
+   CLICK EN CANVAS
+   ============================================================ */
+document.addEventListener('click', (e) => {
+  if (noteCard.classList.contains('open')) return;
+  if (e.target.closest('.music-toggle')) return;
+  if (!state.started) return;
+  if (e.target.closest('.menu-item')) return;
+
+  const car = carHitTest(e.clientX, e.clientY);
+  if (car) openNote(car);
+});
+
+/* ============================================================
+   MÚSICA
+   ============================================================ */
+let musicStarted = false;
+function startMusic() {
+  if (musicStarted) return;
+  music.volume = 0.28;
+  music.play().then(() => {
+    musicToggle.classList.remove('paused');
+  }).catch(() => {});
+  musicStarted = true;
+}
+musicToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (music.paused) startMusic();
+  else { music.pause(); musicToggle.classList.add('paused'); }
+});
+music.addEventListener('error', () => {
+  musicToggle.style.opacity = '0.2';
+  musicToggle.title = 'Coloca "camilo.mp3" junto al HTML';
+});
+
+/* ============================================================
+   CURSOR
+   ============================================================ */
+let mX = W / 2, mY = H / 2;
+let cX = mX, cY = mY;
+document.addEventListener('mousemove', (e) => { mX = e.clientX; mY = e.clientY; });
+function animCursor() {
+  cX += (mX - cX) * 0.22;
+  cY += (mY - cY) * 0.22;
+  cursor.style.transform = `translate(${cX}px, ${cY}px) translate(-50%, -50%)`;
+  const hovered = carHitTest(mX, mY) || document.querySelector('.menu-item:hover');
+  cursor.classList.toggle('hover', !!hovered);
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+
+/* ============================================================
+   INICIAR
+   ============================================================ */
+buildScene();
+requestAnimationFrame(loop);
+
+setTimeout(() => {
+  document.getElementById('introOverlay').classList.add('gone');
+}, 1600);
+
+// El usuario debe elegir con qué auto empezar en el menú
+</script>
+</body>
+</html>
